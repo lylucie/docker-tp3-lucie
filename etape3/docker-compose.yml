@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  data:
+    image: mariadb:latest
+    container_name: data
+    environment:
+      MARIADB_ROOT_PASSWORD: my-secret-pw
+      MARIADB_DATABASE: mabase
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d
+    networks:
+      - tp-network
+
+  script:
+    build: .
+    container_name: script
+    volumes:
+      - ./src:/app
+    networks:
+      - tp-network
+    depends_on:
+      - data
+
+  http:
+    image: nginx:alpine
+    container_name: http
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/app
+      - ./config/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - tp-network
+    depends_on:
+      - script
+
+networks:
+  tp-network:
+    driver: bridge
